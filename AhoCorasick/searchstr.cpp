@@ -19,13 +19,17 @@ int main(int argc, char *argv[])
     bool bInputCheck;
     string inData;
     string inPattern;
+    string outlocation;
     string *pdata;
     int nPatternnum;
     string Pattern;
-    FILE *fp, *fpout;
     ifstream inFile;
-    bInputCheck = errorhandle(argc, argv); // try error handling to avoid wierd input
-    if (bInputCheck)                       // input check success
+    ofstream outFile;
+    /** errorhandle return bInputCheck fail if input invalid,
+     *  use default input data and pattern instead
+     */
+    bInputCheck = errorhandle(argc, argv);
+    if (bInputCheck) // input check success
     {
         inData = argv[1];
         inPattern = argv[2];
@@ -35,6 +39,9 @@ int main(int argc, char *argv[])
         inData = "data";
         inPattern = "Pattern";
     }
+
+    // set output location
+    outlocation = "MatchedPattern";
     cout << "in data: " << inData << endl;
     cout << "in Pattern: " << inPattern << endl;
 
@@ -51,17 +58,22 @@ int main(int argc, char *argv[])
 
     // here openfile and give Pattern input
     inFile.open(inPattern);
-    while(getline(inFile,Pattern))
+    while (getline(inFile, Pattern))
     {
         oAhoCorasick.AddPattern(Pattern);
     }
 
     oAhoCorasick.Redirecting();
     map<string, int> mapOutput = oAhoCorasick.SearchPattern(*pdata);
+    outFile.open(outlocation);
     for (auto it : mapOutput)
     {
-        cout << it.first << '\t' << it.second << endl;
+        cout << it.first << '\t';
+        outFile << left << it.first << '\t';
+        outFile << left << it.second << endl;
+        cout << it.second << endl;
     }
+    outFile.close();
     return 0;
 }
 
@@ -87,10 +99,3 @@ bool errorhandle(int argc, char *argv[])
     }
     return false;
 }
-
-// oAhoCorasick.AddPattern("ABCD");
-// oAhoCorasick.AddPattern("BELIEVE");
-// oAhoCorasick.AddPattern("ELF");
-// oAhoCorasick.AddPattern("ELEPHANT");
-// oAhoCorasick.AddPattern("PHANTOM");
-// oAhoCorasick.AddPattern("A");
