@@ -1,4 +1,4 @@
-/** Description
+/** AhoCorasickAlg.hpp
  * @brief       This program is a modification of icerlion's AchoCorasick,
  *              I modify and commented the original code for learning purpose
  *              Counters are added for ranking purpose;
@@ -183,6 +183,14 @@ public:
         }
     }
 
+    /** bool MatchPattern(const string &strInput) const
+     * @brief   if any pattern matches return true
+     *          faster then the two search method
+     * 
+     * @param   strInput input data
+     * @return  true if any patern matched
+     * @return  false non matched
+     */
     bool MatchPattern(const string &strInput) const
     {
         bool bResult = false;
@@ -222,10 +230,17 @@ public:
         return bResult;
     }
 
+    /** inline map<string, int> SearchPattern(const string &strInput) const
+     * @brief   return a map, 
+     *              1st element is matched pattern,
+     *              2nd element is matched times
+     * 
+     * @param   strInput input data
+     * @return  map<string, int> 
+     */
     inline map<string, int> SearchPattern(const string &strInput) const
     {
         map<string, int> mapOutput;
-        int nOutCounter;
         string strOutput;
         SNode *pCurNode = this_pRootNode; // start from root
         for (char chValue : strInput)
@@ -258,7 +273,7 @@ public:
                         }
                         else
                         {
-                            iterMap->second++;
+                            iterMap->second++; // counter ++
                         }
                     }
                     break;
@@ -266,6 +281,61 @@ public:
             }
         }
         return mapOutput;
+    }
+    
+    /** inline int SearchCount(const string &strInput) const
+     * @brief   return the sum of each matched pattern count
+     *          that is, all pattern matched times
+     * 
+     * @param   strInput Pattern
+     * @return  int  all pattern matched times
+     */
+    inline int SearchCount(const string &strInput) const
+    {
+        map<string, int> mapOutput;
+        int nOutCounter = 0;
+        string strOutput;
+        SNode *pCurNode = this_pRootNode; // start from root
+        for (char chValue : strInput)
+        {
+            chValue = CaseConvert(chValue);
+            while (true)
+            {
+                BREAK_ON_NULLPTR(pCurNode);
+                auto iterFind = pCurNode->mapChild.find(chValue); // search child
+                if (iterFind == pCurNode->mapChild.end())         // no match
+                {
+                    BREAK_ON_NULLPTR(pCurNode);
+                    if (pCurNode == this_pRootNode)
+                    {
+                        break;
+                    }
+                    pCurNode = pCurNode->pRedirect; // goto redirect
+                }
+                else // match
+                {
+                    pCurNode = iterFind->second; // go for node
+                    BREAK_ON_NULLPTR(pCurNode);
+                    if (pCurNode->bEndNode)
+                    {
+                        strOutput = GenerateOutput(pCurNode);
+                        auto iterMap = mapOutput.find(strOutput);
+                        if (iterMap == mapOutput.end()) // first find
+                        {
+                            mapOutput.insert(make_pair(strOutput, 1));
+                            nOutCounter++;
+                        }
+                        else
+                        {
+                            iterMap->second++;
+                            nOutCounter++;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        return nOutCounter;
     }
 
 private:
@@ -382,11 +452,17 @@ private:
         return chValue;
     }
 
+    /** GenerateOutput(SNode *pNode) const
+     * @brief read a matched end node and read from it to root, return the matched word
+     * 
+     * @param pNode input node
+     * @return string matched word
+     */
     string GenerateOutput(SNode *pNode) const
     {
         string strResult;
         RETURN_ON_NULLPTR(pNode, strResult);
-        strResult.reserve(pNode->nHeight); // + strCounter.length()
+        strResult.reserve(pNode->nHeight); 
         while (nullptr != pNode && pNode->pParent != nullptr)
         {
             strResult.push_back(pNode->nValue);

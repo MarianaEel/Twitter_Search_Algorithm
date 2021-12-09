@@ -8,23 +8,26 @@
  * @copyright   Copyright (c) 2021 Zhang, Chenbo
  *
  * @warning     input format:   data has no limitation
- *                              Pattern start with numbers of Pattern at the first line, then goes with string Patterns
+ *                              Pattern will read every line a new pattern
+ *              output format:  matched count (max to min) ,         its row index in data
  */
 #include "AhoCorasickAlg.hpp"
 // first arg data, second Pattern
 bool errorhandle(int argc, char *argv[]);
-
 int main(int argc, char *argv[])
 {
     bool bInputCheck;
     string inData;
     string inPattern;
     string outlocation;
-    string *pdata;
+    string strdata;
     int nPatternnum;
     string Pattern;
     ifstream inFile;
     ofstream outFile;
+    long linepos;
+    map<int, set<long>, greater<int>> mapOutput;
+
     /** errorhandle return bInputCheck fail if input invalid,
      *  use default input data and pattern instead
      */
@@ -36,7 +39,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        inData = "data";
+        inData = "abcnews-date-text";
         inPattern = "Pattern";
     }
 
@@ -48,35 +51,68 @@ int main(int argc, char *argv[])
     /* here goes code that new a CAhoTree and match Patterns within data using it*/
     CAhoTree oAhoCorasick(false); // true for case sensitive
 
-    // here openfile and give data input
-    inFile.open(inData);
-    string str((istreambuf_iterator<char>(inFile)),
-               istreambuf_iterator<char>());
-    pdata = &str;
-    inFile.close();
-    // cout << *pdata << endl;
-
-    // here openfile and give Pattern input
+    /* here openfile and give Pattern input*/
     inFile.open(inPattern);
     while (getline(inFile, Pattern))
     {
         oAhoCorasick.AddPattern(Pattern);
     }
-
+    inFile.close();
     oAhoCorasick.Redirecting();
-    map<string, int> mapOutput = oAhoCorasick.SearchPattern(*pdata);
-    outFile.open(outlocation);
-    for (auto it : mapOutput)
+
+    /* here openfile and give data input*/
+    inFile.open(inData);
+    linepos = 1;
+    while (getline(inFile, strdata)) // traverse every line of input file,
+                                     // get pattern match count
+                                     // return a in-order map<int patterncount, set<long matched_pattern_in_data_posision>>
     {
-        cout << it.first << '\t';
-        outFile << left << it.first << '\t';
-        outFile << left << it.second << endl;
-        cout << it.second << endl;
+        nPatternnum = oAhoCorasick.SearchCount(strdata);
+        auto iterFind = mapOutput.find(nPatternnum);
+        // element not found, then insert it as new set
+        if (iterFind == mapOutput.end())
+        {
+            set<long> veclinepos;
+            veclinepos.insert(linepos);
+            mapOutput.insert(make_pair(nPatternnum, veclinepos));
+        }
+        else // element found, add it in set
+        {
+            set<long> &veclinepos = iterFind->second;
+            veclinepos.insert(linepos);
+        }
+        linepos++;
+    }
+    inFile.close();
+
+    /** generate output file
+     * @brief iterate map then map->linepos set for top 20 hits
+     *
+     */
+    outFile.open(outlocation);
+    int i = 1;
+    for (auto it = mapOutput.begin(); it != mapOutput.end(); it++)
+    {
+        for (auto itvec : it->second)
+        {
+            cout << it->first << '\t';
+            outFile << left << it->first << '\t';
+            cout << itvec << endl;
+            outFile << left << itvec << endl;
+            i++;
+        }
+        if (i > 20)
+            break;
     }
     outFile.close();
     return 0;
 }
 
+/** errorhandle(int argc, char *argv[])
+ * @brief
+ * @return true when arguement number = 3 (1 input data, 1 input pattern)
+ * @return false when arguement number != 3
+ */
 bool errorhandle(int argc, char *argv[])
 {
     try
@@ -93,7 +129,7 @@ bool errorhandle(int argc, char *argv[])
     catch (int argc)
     {
         cout << "need 2 input, first data, second pattern" << endl;
-        cout << "input automatically set as 'data' and 'pattern'" << endl;
+        cout << "input automatically set as 'abcnews-date-text.csv' and 'pattern'" << endl;
         // assert(false);
         return false;
     }
