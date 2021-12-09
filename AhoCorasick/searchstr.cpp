@@ -12,6 +12,17 @@
  *              output format:  matched count (max to min) ,         its row index in data
  */
 #include "AhoCorasickAlg.hpp"
+
+#define SET_ARRAY_ITEMS_ZERO(arrName) memset(arrName, 0, sizeof(arrName))
+#define FREE_MALLOC_PTR(ptrName) \
+    ;                            \
+    if (NULL != ptrName)         \
+    {                            \
+        free(ptrName);           \
+        ptrName = NULL;          \
+    }
+
+char *ReadSpeacialLine(char *filename, long whichLine);
 // first arg data, second Pattern
 bool errorhandle(int argc, char *argv[]);
 int main(int argc, char *argv[])
@@ -27,6 +38,8 @@ int main(int argc, char *argv[])
     ofstream outFile;
     long linepos;
     map<int, set<long>, greater<int>> mapOutput;
+    char *sdf = NULL;
+    FILE *fp;
 
     /** errorhandle return bInputCheck fail if input invalid,
      *  use default input data and pattern instead
@@ -97,8 +110,22 @@ int main(int argc, char *argv[])
         {
             cout << it->first << '\t';
             outFile << left << it->first << '\t';
-            cout << itvec << endl;
-            outFile << left << itvec << endl;
+            cout << itvec << '\t';
+            outFile << left << itvec << '\t' ;
+            // str to char*
+            char *cstr = new char[inData.length() + 1];
+            strcpy(cstr, inData.c_str());
+
+            sdf = ReadSpeacialLine(cstr, itvec);
+            if (sdf)
+            {
+                cout << sdf << endl;
+                outFile << left << sdf << endl;
+            }
+            // do stuff
+            delete[] cstr;
+            FREE_MALLOC_PTR(sdf); //此处必须有,因为在RSL函数里面分配了堆内存
+
             i++;
         }
         if (i > 20)
@@ -134,4 +161,36 @@ bool errorhandle(int argc, char *argv[])
         return false;
     }
     return false;
+}
+
+char *ReadSpeacialLine(char *filename, long whichLine)
+{
+    if (whichLine < 0 || NULL == filename)
+    {
+        return NULL;
+    }
+    FILE *fp = fopen(filename, "r");
+    if (NULL == fp)
+    {
+        return NULL;
+    }
+    int reachWhichLine = 0;
+    int curLine = 1;
+#define LINE_SIZE 256
+    char *data = NULL;
+    data = (char *)malloc(LINE_SIZE);
+    while (!feof(fp)) //文件未结束
+    {
+        memset(data, 0, LINE_SIZE);
+        fgets(data, LINE_SIZE - 1, fp);
+        curLine++;
+        if (curLine > whichLine)
+        {
+            reachWhichLine = 1; //已经读取到whichLine行
+            break;
+        }
+    }
+    fclose(fp);
+
+    return 0 == reachWhichLine ? NULL : data;
 }

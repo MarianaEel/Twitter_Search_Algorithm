@@ -73,6 +73,7 @@ private:
          * @param pParent pointer, point to parent node
          * @param pRedirect pointer, point to the redirect node,
          *                  if the matching fails, go this way for next match
+         * @param mapChild map<char, SNode*> link parent to their children
          * @param bEndNode decide if the node is a end of a matching pattern
          * @return
          */
