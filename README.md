@@ -62,18 +62,19 @@ Private:
    6. mapChild map<char, SNode*> link parent to their children;
    7. bEndNode decide if the node is a end of a matching pattern;
 
-2. Construct method CAhoTree and destroy method ~CAhoTree;
+Public:
 
-3. AddPattern
+1. Construct method CAhoTree and destroy method ~CAhoTree;
+2. AddPattern
    1. from root, walk the tree by the character of the pattern, if walk into a dead end, build a  branch using what is left in input string, the last character of the string is matched as bEndNode;
-4. Redirecting
+3. Redirecting
    1. go through every exist node with same key  (every new node will be pushed into a local map, key is char nValue , value is the set of nodes with char nValue);
    2.  Try connect them, Call function ConnectRedirectNode;
-5.  MatchPattern
+4. MatchPattern
    1. Return if there exist any match, stops at first match, faster than searching method;
-6.  SearchPattern
+5. SearchPattern
    1. search all matches, find matched patterns, call GenerateOutput to return a output string, insert it in a map, return this map, key is matched pattern, value is this pattern's matched count;
-7.  SearchCount 
+6. SearchCount 
    1. return the sum of  matched times of all pattern;
 
 Private:
